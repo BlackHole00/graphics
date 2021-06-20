@@ -59,13 +59,11 @@ impl Application for App {
 
         let texture1 =
             TextureBuilder::from_file(&Path::new("res/textures/container.jpg"), false, false)
-                .unwrap()
                 .build();
         texture1.bind();
         pipeline.set_uniform("texture1", &texture1);
 
         let texture2 = TextureBuilder::from_file(&Path::new("res/textures/wall.jpg"), false, true)
-            .unwrap()
             .active_texture_number(gl::TEXTURE1)
             .build();
         texture2.bind();

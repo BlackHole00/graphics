@@ -20,11 +20,11 @@ pub struct Texture {
 }
 
 impl Texture {
-    pub fn set_image(&self, image_data: ImageData, internal_format: GLenum, format: GLenum) {
+    pub fn set_image(&self, texture_data: TextureData, internal_format: GLenum, format: GLenum) {
         self.bind();
 
-        match image_data {
-            ImageData::Raw {
+        match texture_data {
+            TextureData::Raw {
                 data,
                 width,
                 height,
@@ -40,8 +40,8 @@ impl Texture {
                     gl::UNSIGNED_BYTE,
                     data.as_ptr() as *const c_void
                 ));
-            }
-            ImageData::Image {
+            },
+            TextureData::Image {
                 image,
                 flip_h,
                 flip_v,
@@ -66,10 +66,10 @@ impl Texture {
                     gl::UNSIGNED_BYTE,
                     &image.as_bytes()[0] as *const u8 as *const c_void
                 ));
-            }
+            },
             _ => {
                 log::error!("Invalid image data");
-            }
+            },
         }
     }
 }
@@ -101,7 +101,7 @@ impl ShaderUniformable for &Texture {
     }
 }
 
-pub enum ImageData {
+pub enum TextureData {
     Raw {
         data: Vec<u8>,
         width: u32,
@@ -117,7 +117,7 @@ pub enum ImageData {
 
 pub struct TextureBuilder {
     gl_type: GLenum,
-    image_data: ImageData,
+    texture_data: TextureData,
 
     format: GLenum,
     internal_format: GLenum,
@@ -135,10 +135,23 @@ impl TextureBuilder {
         TextureBuilder::default()
     }
 
-    pub fn from_file(image_path: &Path, flip_h: bool, flip_v: bool) -> Option<TextureBuilder> {
+    pub fn from_file(image_path: &Path, flip_h: bool, flip_v: bool) -> TextureBuilder {
         let image = image::open(image_path);
         match image {
-            Err(_) => None,
+            Err(_) => {
+                let missing_texture: TextureData = TextureData::Raw{
+                    data: [255, 0, 255, 255, 0, 0, 0, 255, 0, 0, 0, 255, 255, 0, 255, 255].to_vec(),
+                    width: 2,
+                    height: 2,
+                };
+                
+                log::warn!("Image at {} not found!!!", image_path.to_str().unwrap());
+
+                TextureBuilder::default()
+                    .texture_data(missing_texture)
+                    .internal_format(gl::RGBA)
+                    .format(gl::RGBA)
+            },
             Ok(image) => {
                 let format = match image.color() {
                     image::ColorType::Rgb8 => gl::RGB,
@@ -146,22 +159,20 @@ impl TextureBuilder {
                     _ => gl::RGB,
                 };
 
-                Some(
-                    TextureBuilder::default()
-                        .image_data(ImageData::Image {
-                            image,
-                            flip_h,
-                            flip_v,
-                        })
-                        .format(format)
-                        .internal_format(format),
-                )
-            }
+                TextureBuilder::default()
+                    .texture_data(TextureData::Image {
+                        image,
+                        flip_h,
+                        flip_v,
+                    })
+                    .format(format)
+                    .internal_format(format)
+            },
         }
     }
 
     pub fn from_raw_data(data: &[u8], width: u32, height: u32) -> TextureBuilder {
-        TextureBuilder::default().image_data(ImageData::Raw {
+        TextureBuilder::default().texture_data(TextureData::Raw {
             data: data.to_owned(),
             width,
             height,
@@ -213,8 +224,8 @@ impl TextureBuilder {
         self
     }
 
-    pub fn image_data(mut self, image_data: ImageData) -> TextureBuilder {
-        self.image_data = image_data;
+    pub fn texture_data(mut self, texture_data: TextureData) -> TextureBuilder {
+        self.texture_data = texture_data;
         self
     }
 
@@ -246,8 +257,8 @@ impl TextureBuilder {
             self.texture_mag_filter as i32
         ));
 
-        match self.image_data {
-            ImageData::Raw {
+        match self.texture_data {
+            TextureData::Raw {
                 data,
                 width,
                 height,
@@ -264,7 +275,7 @@ impl TextureBuilder {
                     data.as_ptr() as *const c_void
                 ));
             }
-            ImageData::Image {
+            TextureData::Image {
                 image,
                 flip_h,
                 flip_v,
@@ -290,7 +301,7 @@ impl TextureBuilder {
                     &image.as_bytes()[0] as *const u8 as *const c_void
                 ));
             }
-            ImageData::None => {}
+            TextureData::None => {}
         }
 
         if self.use_mipmaps {
@@ -309,7 +320,7 @@ impl Default for TextureBuilder {
     fn default() -> Self {
         TextureBuilder {
             gl_type: gl::TEXTURE_2D,
-            image_data: ImageData::None,
+            texture_data: TextureData::None,
 
             format: gl::RGB,
             internal_format: gl::RGB,
