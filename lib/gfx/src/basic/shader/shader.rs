@@ -1,18 +1,13 @@
 extern crate gl;
 
 use self::gl::types::*;
-use super::Bindable;
+use super::ShaderUniform;
+use crate::prelude::{Bindable, ShaderObject};
 use crate::gl_call;
 
-use cgmath::{Matrix, Matrix4, Vector3};
 use log::{error, warn};
 use std::{ffi::CString, fs, path::Path, ptr};
 use utilis::str_to_c_str_ptr;
-
-pub trait ShaderObject: Bindable {
-    fn set_uniform<T: ShaderUniformable>(&mut self, uniform_name: &str, value: T);
-    fn get_uniform_location(&mut self, uniform_name: &str) -> GLint;
-}
 
 #[derive(Clone)]
 pub struct Shader{
@@ -79,7 +74,7 @@ impl Shader {
 }
 
 impl ShaderObject for Shader {
-    fn set_uniform<T: ShaderUniformable>(&mut self, uniform_name: &str, value: T) {
+    fn set_uniform<T: ShaderUniform>(&mut self, uniform_name: &str, value: T) {
         self.bind();
         value.set_uniform(self, uniform_name);
     }
@@ -197,41 +192,4 @@ pub fn get_uniform_location(shader_id: GLuint, uniform_name: &str) -> GLint {
     }
 
     uniform_location
-}
-
-pub trait ShaderUniformable {
-    fn set_uniform(&self, shader: &mut impl ShaderObject, uniform_name: &str);
-}
-
-impl ShaderUniformable for i32 {
-    fn set_uniform(&self, shader: &mut impl ShaderObject, uniform_name: &str) {
-        let uniform_location = shader.get_uniform_location(uniform_name);
-        gl_call!(gl::Uniform1i(uniform_location, *self));
-    }
-}
-
-impl ShaderUniformable for f32 {
-    fn set_uniform(&self, shader: &mut impl ShaderObject, uniform_name: &str) {
-        let uniform_location = shader.get_uniform_location(uniform_name);
-        gl_call!(gl::Uniform1f(uniform_location, *self));
-    }
-}
-
-impl ShaderUniformable for Vector3<f32> {
-    fn set_uniform(&self, shader: &mut impl ShaderObject, uniform_name: &str) {
-        let uniform_location = shader.get_uniform_location(uniform_name);
-        gl_call!(gl::Uniform3f(uniform_location, self[0], self[1], self[2]));
-    }
-}
-
-impl ShaderUniformable for Matrix4<f32> {
-    fn set_uniform(&self, shader: &mut impl ShaderObject, uniform_name: &str) {
-        let uniform_location = shader.get_uniform_location(uniform_name);
-        gl_call!(gl::UniformMatrix4fv(
-            uniform_location,
-            1,
-            gl::FALSE,
-            self.as_ptr()
-        ));
-    }
 }

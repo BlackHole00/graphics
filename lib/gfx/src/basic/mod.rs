@@ -7,7 +7,7 @@ mod vbo;
 
 pub use camera::Camera;
 pub use ebo::{Ebo, EboObject};
-pub use shader::{get_uniform_location, Shader, ShaderObject, ShaderUniformable};
+pub use shader::{Shader, ShaderObject, ShaderUniform};
 pub use texture::{TextureData, Texture, TextureBuilder, TextureObject};
 pub use vao::{Vao, VaoLayout, VaoObject};
 pub use vbo::{Vbo, VboObject};
