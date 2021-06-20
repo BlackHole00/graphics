@@ -92,7 +92,7 @@ impl Camera {
         self.front[2] = self.rotation[0].to_radians().sin() * self.rotation[1].to_radians().cos();
     }
 
-    pub fn bind_to_shader<T>(&mut self, shader: &T)
+    pub fn bind_to_shader<T>(&mut self, shader: &mut T)
     where
         T: ShaderObject,
     {

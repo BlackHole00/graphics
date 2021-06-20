@@ -30,7 +30,7 @@ impl Application for App {
         gl_call!(gl::Enable(gl::DEPTH_TEST));
         gl_call!(gl::Enable(gl::BLEND));
 
-        let pipeline = Pipeline::new(
+        let mut pipeline = Pipeline::new(
             Path::new("res/shaders/basic.vs"),
             Path::new("res/shaders/basic.fs"),
         );
@@ -73,7 +73,7 @@ impl Application for App {
         pipeline.set_uniform("model", model_mat);
 
         let mut camera = Camera::new(800, 600, 100.0);
-        camera.bind_to_shader(&pipeline);
+        camera.bind_to_shader(&mut pipeline);
 
         pipeline.set_uniform("mixValue", 0.5);
 
@@ -100,7 +100,7 @@ impl Application for App {
     }
 
     fn logic(&mut self, input: &mut WinitInputHelper, control_flow: &mut ControlFlow, delta: f64) {
-        check_camera_inputs(&mut self.camera, &self.pipeline, input, delta);
+        check_camera_inputs(&mut self.camera, &mut self.pipeline, input, delta);
 
         if input.key_pressed(VirtualKeyCode::Escape) {
             *control_flow = ControlFlow::Exit;
@@ -125,7 +125,7 @@ impl Application for App {
 
 fn check_camera_inputs(
     camera: &mut Camera,
-    pipeline: &Pipeline,
+    pipeline: &mut Pipeline,
     input: &mut WinitInputHelper,
     delta: f64,
 ) {

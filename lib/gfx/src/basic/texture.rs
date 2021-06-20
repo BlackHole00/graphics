@@ -2,7 +2,7 @@ extern crate gl;
 use gl::types::*;
 
 use super::{
-    shader::{get_uniform_location, ShaderUniformable},
+    shader::{ShaderUniformable, ShaderObject},
     Bindable,
 };
 use crate::{derives::TextureObject, gl_call};
@@ -92,8 +92,8 @@ impl Drop for Texture {
 }
 
 impl ShaderUniformable for &Texture {
-    fn set_uniform(&self, shader_id: GLuint, uniform_name: &str) {
-        let uniform_location = get_uniform_location(shader_id, uniform_name);
+    fn set_uniform(&self, shader: &mut impl ShaderObject, uniform_name: &str) {
+        let uniform_location = shader.get_uniform_location(uniform_name);
         gl_call!(gl::Uniform1i(
             uniform_location,
             (self.active_texture_number - gl::TEXTURE0) as i32

@@ -10,11 +10,15 @@ use std::{ffi::CString, fs, path::Path, ptr};
 use utilis::str_to_c_str_ptr;
 
 pub trait ShaderObject: Bindable {
-    fn set_uniform<T: ShaderUniformable>(&self, uniform_name: &str, value: T);
+    fn set_uniform<T: ShaderUniformable>(&mut self, uniform_name: &str, value: T);
+    fn get_uniform_location(&mut self, uniform_name: &str) -> GLint;
 }
 
 #[derive(Clone)]
-pub struct Shader(GLuint);
+pub struct Shader{
+    shader_id: GLuint,
+    uniforms: Vec::<(String, GLint)>
+}
 
 #[allow(dead_code)]
 impl Shader {
@@ -65,21 +69,38 @@ impl Shader {
             shader_id
         };
 
-        Shader(shader_id)
+        Shader{
+            shader_id,
+            uniforms: Vec::new(),
+        }
     }
+
+
 }
 
 impl ShaderObject for Shader {
-    fn set_uniform<T: ShaderUniformable>(&self, uniform_name: &str, value: T) {
+    fn set_uniform<T: ShaderUniformable>(&mut self, uniform_name: &str, value: T) {
         self.bind();
-        value.set_uniform(self.0, uniform_name);
+        value.set_uniform(self, uniform_name);
+    }
+
+    fn get_uniform_location(&mut self, uniform_name: &str) -> GLint {
+        let uniform_name_string = uniform_name.to_string();
+        if let Some((_, uniform_location)) = self.uniforms.iter().find(|x| x.0 == uniform_name_string) {
+            return *uniform_location;
+        }
+        
+        let uniform_location = get_uniform_location(self.shader_id, uniform_name);
+        self.uniforms.push((uniform_name_string, uniform_location));
+
+        uniform_location
     }
 }
 
 impl Bindable for Shader {
     #[inline]
     fn bind(&self) {
-        gl_call!(gl::UseProgram(self.0));
+        gl_call!(gl::UseProgram(self.shader_id));
     }
 
     #[inline]
@@ -90,7 +111,7 @@ impl Bindable for Shader {
 
 impl Drop for Shader {
     fn drop(&mut self) {
-        gl_call!(gl::DeleteProgram(self.0));
+        gl_call!(gl::DeleteProgram(self.shader_id));
     }
 }
 
@@ -179,33 +200,33 @@ pub fn get_uniform_location(shader_id: GLuint, uniform_name: &str) -> GLint {
 }
 
 pub trait ShaderUniformable {
-    fn set_uniform(&self, shader_id: GLuint, uniform_name: &str);
+    fn set_uniform(&self, shader: &mut impl ShaderObject, uniform_name: &str);
 }
 
 impl ShaderUniformable for i32 {
-    fn set_uniform(&self, shader_id: GLuint, uniform_name: &str) {
-        let uniform_location = get_uniform_location(shader_id, uniform_name);
+    fn set_uniform(&self, shader: &mut impl ShaderObject, uniform_name: &str) {
+        let uniform_location = shader.get_uniform_location(uniform_name);
         gl_call!(gl::Uniform1i(uniform_location, *self));
     }
 }
 
 impl ShaderUniformable for f32 {
-    fn set_uniform(&self, shader_id: GLuint, uniform_name: &str) {
-        let uniform_location = get_uniform_location(shader_id, uniform_name);
+    fn set_uniform(&self, shader: &mut impl ShaderObject, uniform_name: &str) {
+        let uniform_location = shader.get_uniform_location(uniform_name);
         gl_call!(gl::Uniform1f(uniform_location, *self));
     }
 }
 
 impl ShaderUniformable for Vector3<f32> {
-    fn set_uniform(&self, shader_id: GLuint, uniform_name: &str) {
-        let uniform_location = get_uniform_location(shader_id, uniform_name);
+    fn set_uniform(&self, shader: &mut impl ShaderObject, uniform_name: &str) {
+        let uniform_location = shader.get_uniform_location(uniform_name);
         gl_call!(gl::Uniform3f(uniform_location, self[0], self[1], self[2]));
     }
 }
 
 impl ShaderUniformable for Matrix4<f32> {
-    fn set_uniform(&self, shader_id: GLuint, uniform_name: &str) {
-        let uniform_location = get_uniform_location(shader_id, uniform_name);
+    fn set_uniform(&self, shader: &mut impl ShaderObject, uniform_name: &str) {
+        let uniform_location = shader.get_uniform_location(uniform_name);
         gl_call!(gl::UniformMatrix4fv(
             uniform_location,
             1,

@@ -1,3 +1,4 @@
+use gl::types::GLint;
 use crate::{
     basic::{Bindable, Shader, ShaderObject, ShaderUniformable, Vao, VaoObject},
     derives::VaoObject,
@@ -53,9 +54,14 @@ impl Bindable for Pipeline {
 
 impl ShaderObject for Pipeline {
     #[inline]
-    fn set_uniform<T: ShaderUniformable>(&self, uniform_name: &str, value: T) {
+    fn set_uniform<T: ShaderUniformable>(&mut self, uniform_name: &str, value: T) {
         self.shader.bind();
         self.shader.set_uniform(uniform_name, value);
+    }
+
+    #[inline]
+    fn get_uniform_location(&mut self, uniform_name: &str) -> GLint {
+        self.shader.get_uniform_location(uniform_name)
     }
 }
 
