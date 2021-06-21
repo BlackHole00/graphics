@@ -102,6 +102,12 @@ impl Application for App {
     fn logic(&mut self, input: &mut WinitInputHelper, control_flow: &mut ControlFlow, delta: f64) {
         check_camera_inputs(&mut self.camera, &mut self.pipeline, input, delta);
 
+        if input.key_held(VirtualKeyCode::Z) {
+            gl_call!(gl::PolygonMode(gl::FRONT_AND_BACK , gl::LINE));
+        } else {
+            gl_call!(gl::PolygonMode(gl::FRONT_AND_BACK , gl::FILL))
+        }
+
         if input.key_pressed(VirtualKeyCode::Escape) {
             *control_flow = ControlFlow::Exit;
         }

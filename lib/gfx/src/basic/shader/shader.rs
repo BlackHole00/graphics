@@ -179,7 +179,7 @@ fn check_program_error(program_id: GLuint, vertex_path: &Path, fragment_path: &P
     }
 }
 
-pub fn get_uniform_location(shader_id: GLuint, uniform_name: &str) -> GLint {
+fn get_uniform_location(shader_id: GLuint, uniform_name: &str) -> GLint {
     let uniform_location;
 
     gl_call!(uniform_location = gl::GetUniformLocation(shader_id, str_to_c_str_ptr!(uniform_name)));

@@ -1,43 +1,7 @@
-extern crate gl;
-use std::ffi::c_void;
-
-use self::gl::types::*;
-
-use super::Bindable;
-use crate::{derives::VaoObject, gl_call};
+use gl::types::*;
 use utilis::size_of_gl_type;
-
-pub trait VaoObject: Bindable {}
-
-#[derive(Clone, VaoObject)]
-pub struct Vao(GLuint);
-
-impl Vao {
-    pub fn new() -> Vao {
-        let mut vao_id = 0;
-        gl_call!(gl::GenVertexArrays(1, &mut vao_id));
-
-        Vao(vao_id)
-    }
-}
-
-impl Bindable for Vao {
-    #[inline]
-    fn bind(&self) {
-        gl_call!(gl::BindVertexArray(self.0));
-    }
-
-    #[inline]
-    fn unbind(&self) {
-        gl_call!(gl::BindVertexArray(0));
-    }
-}
-
-impl Drop for Vao {
-    fn drop(&mut self) {
-        gl_call!(gl::DeleteVertexArrays(1, &self.0));
-    }
-}
+use crate::prelude::{gl_call, VaoObject};
+use std::ffi::c_void;
 
 struct VaoLayoutElement {
     count: u8,
