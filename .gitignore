@@ -1,2 +1,8 @@
 /target
 /.backup
+/lib/gfx/target
+/lib/logic/target
+/lib/macros/target
+/lib/utilis/target
+/lib/window/target
+
