@@ -1,8 +1,5 @@
-use gl::types::GLint;
-use crate::{
-    basic::{Bindable, Shader, ShaderObject, ShaderUniform, Vao, VaoObject},
-    derives::VaoObject,
-};
+use gl::types::*;
+use crate::{basic::{Bindable, Shader, ShaderObject, ShaderUniform, Vao, VaoObject}, derives::VaoObject, gl_call};
 use std::path::Path;
 
 #[derive(VaoObject)]
@@ -29,6 +26,41 @@ impl Pipeline {
         }
     }
 
+    pub fn update_states(&self) {
+        match self.states.depth_test {
+            Some(mode) => {
+                gl_call!(gl::Enable(gl::DEPTH_TEST));
+                gl_call!(gl::DepthFunc(mode));
+            },
+            None => {
+                gl_call!(gl::Disable(gl::DEPTH_TEST));
+            },
+        }
+
+        match self.states.blend {
+            Some((sfactor, dfactor)) => {
+                gl_call!(gl::Enable(gl::BLEND));
+                gl_call!(gl::BlendFunc(sfactor, dfactor));
+            },
+            None => {
+                gl_call!(gl::Disable(gl::BLEND));
+            }
+        }
+
+        match self.states.cull_face {
+            Some((face, mode)) => {
+                gl_call!(gl::Enable(gl::CULL_FACE));
+                gl_call!(gl::CullFace(face));
+                gl_call!(gl::FrontFace(mode));
+            },
+            None => {
+                gl_call!(gl::Disable(gl::CULL_FACE));
+            },
+        }
+
+        gl_call!(gl::PolygonMode(gl::FRONT_AND_BACK, self.states.polygon_mode));
+    }
+
     pub fn vao(&self) -> &Vao {
         &self.vao
     }
@@ -40,10 +72,9 @@ impl Pipeline {
 
 impl Bindable for Pipeline {
     fn bind(&self) {
+        self.update_states();
         self.vao.bind();
         self.shader.bind();
-
-        //  TODO: States
     }
 
     fn unbind(&self) {
@@ -65,10 +96,22 @@ impl ShaderObject for Pipeline {
     }
 }
 
-pub struct PipelineStates {}
+pub struct PipelineStates {
+    pub depth_test: Option<GLenum>,
+    pub blend: Option<(GLenum, GLenum)>,
+    pub cull_face: Option<(GLenum, GLenum)>,
+    pub polygon_mode: GLenum,
+
+    //  There will be more...
+}
 
 impl Default for PipelineStates {
     fn default() -> Self {
-        PipelineStates {}
+        PipelineStates {
+            depth_test: None,
+            blend: None,
+            cull_face: None,
+            polygon_mode: gl::FILL,
+        }
     }
 }

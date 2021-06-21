@@ -1,7 +1,6 @@
 use cgmath::{vec3, Matrix4};
 use gfx::{
     basic::{Camera, Texture, TextureBuilder, VaoLayout},
-    gl_call,
     prelude::*,
     Mesh, MeshBuilder, Pipeline,
 };
@@ -34,6 +33,7 @@ impl Application for App {
             Path::new("res/shaders/basic.vs"),
             Path::new("res/shaders/basic.fs"),
         );
+        pipeline.states.depth_test = Some(gl::LESS);
 
         pipeline.bind();
 
@@ -55,7 +55,7 @@ impl Application for App {
         let mut vao_layout = VaoLayout::new();
         vao_layout.push_element(3, gl::FLOAT, false);
         vao_layout.push_element(2, gl::FLOAT, false);
-        vao_layout.apply_layout(&pipeline);
+        vao_layout.apply_layout(pipeline.vao());
 
         let texture1 =
             TextureBuilder::from_file(&Path::new("res/textures/container.jpg"), false, false)
@@ -103,9 +103,11 @@ impl Application for App {
         check_camera_inputs(&mut self.camera, &mut self.pipeline, input, delta);
 
         if input.key_held(VirtualKeyCode::Z) {
-            gl_call!(gl::PolygonMode(gl::FRONT_AND_BACK , gl::LINE));
+            self.pipeline.states.polygon_mode = gl::LINE;
+            self.pipeline.update_states();
         } else {
-            gl_call!(gl::PolygonMode(gl::FRONT_AND_BACK , gl::FILL))
+            self.pipeline.states.polygon_mode = gl::FILL;
+            self.pipeline.update_states();
         }
 
         if input.key_pressed(VirtualKeyCode::Escape) {
