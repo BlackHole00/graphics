@@ -86,7 +86,6 @@ impl Bindable for Pipeline {
 impl ShaderObject for Pipeline {
     #[inline]
     fn set_uniform<T: ShaderUniform>(&mut self, uniform_name: &str, value: T) {
-        self.shader.bind();
         self.shader.set_uniform(uniform_name, value);
     }
 

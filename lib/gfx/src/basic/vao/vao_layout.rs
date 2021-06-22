@@ -1,5 +1,5 @@
 use gl::types::*;
-use utilis::size_of_gl_type;
+use utils::size_of_gl_type;
 use crate::prelude::{gl_call, VaoObject};
 use std::ffi::c_void;
 

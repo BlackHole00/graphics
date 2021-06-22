@@ -7,7 +7,7 @@ use crate::gl_call;
 
 use log::{error, warn};
 use std::{ffi::CString, fs, path::Path, ptr};
-use utilis::str_to_c_str_ptr;
+use utils::str_to_c_str_ptr;
 
 #[derive(Clone)]
 pub struct Shader{
